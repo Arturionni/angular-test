@@ -1,15 +1,16 @@
 import {NgModule} from '@angular/core'
-import {RouterModule, Routes} from '@angular/router'
-import { ClientsComponent } from './clients/clients.component'
-import { ClientComponent } from './client/client.component';
+import {PreloadAllModules, RouterModule, Routes} from '@angular/router'
 
 const routes: Routes = [
-  {path: '', component: ClientsComponent},
-  {path: ':id', component: ClientComponent},
+  {path: '', loadChildren: () => import('./clients/clients.module').then(m => m.ClientsModule)},
+  {path: ':id', loadChildren: () => import('./client/client.module').then(m => m.ClientModule)},
+  {path: '*', redirectTo: ''},
 ]
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    preloadingStrategy: PreloadAllModules
+  })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

@@ -1,29 +1,22 @@
-import { Client, ClientsService } from './clients.service';
-import { HttpEvent, HttpEventType, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http'
+import { ClientsService } from './clients.service';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http'
 import { Observable, of } from 'rxjs'
-import { tap } from 'rxjs/operators'
 import { Injectable } from '@angular/core';
 
 @Injectable()
 export class AutnInterceptor implements HttpInterceptor {
-	constructor(private clientsService: ClientsService) {}
+	constructor(private clientsService: ClientsService) { }
 
-	intercept(req: HttpRequest<any>): Observable<HttpEvent<any>> {
-		const id = req.params.get('id')
-		
-		console.log('Intercept request')
-		console.log('Intercept request', id)
+	intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		const isGetAllUrl = req.urlWithParams === 'http://somesite.com/clients';
 
-		const mock =  id ? this.clientsService.getMock(id) : this.clientsService.clients;
+		if (isGetAllUrl || this.clientsService.clients.find(client => client.url === req.urlWithParams)) {
+			return of(new HttpResponse({
+				status: 200,
+				body: isGetAllUrl ? this.clientsService.getAllClientsMock() : this.clientsService.getClientMock(req.params.get('id'))
+			}))
+		}
 
-		return of(new HttpResponse(
-			{ status: 200, body: mock }
-		))
-			.pipe(
-				tap(event => {
-					if (event.type === HttpEventType.Response) {
-						console.log('Interceptor response', event)
-					}
-				}));
+		return next.handle(req);
 	}
 }
